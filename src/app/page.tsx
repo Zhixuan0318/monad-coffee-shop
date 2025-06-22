@@ -2,6 +2,7 @@ import Banner from "@/component/banner";
 import Balance from "@/component/balance";
 import ClaimButton from "@/component/claim-button";
 import Option from "@/component/option";
+import WalletConnectButton from "@/component/walletConnect-button";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <div className="w-full max-w-2xl space-y-5">
         {/* Banner */}
         <Banner />
+        <WalletConnectButton/>
 
         {/* Balance Row */}
         <div className="flex space-x-2">
