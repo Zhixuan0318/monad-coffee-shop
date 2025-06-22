@@ -10,6 +10,7 @@ import Banner from "@/component/banner";
 import Balance from "@/component/balance";
 import ClaimButton from "@/component/claim-button";
 import Option from "@/component/option";
+import Redeem from "@/component/redeem-button"; // ← Add this import
 import WalletConnectButton from "@/component/walletConnect-button";
 
 const BEAN_ADDRESS = "0x110225d9A24a40374D752B1d05275488aB5CC8b6";
@@ -18,6 +19,7 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const [totalSupply, setTotalSupply] = useState("0");
   const [userBalance, setUserBalance] = useState("0");
+  const [selected, setSelected] = useState<string | null>(null); // ← Add selected drink
 
   const client = createPublicClient({
     chain: monadTestnet,
@@ -73,7 +75,12 @@ export default function Home() {
             <h2 className="font-semibold text-lg text-[#432DA8] mt-5">
               Choose a coffee
             </h2>
-            <Option />
+
+            <Option selected={selected} onSelect={setSelected}/>
+
+            <div className="mt-2">
+              <Redeem selected={selected} onRedeemSuccess={fetchBalances} />
+            </div>
           </>
         )}
       </div>

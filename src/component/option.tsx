@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import clsx from 'clsx';
-import Redeem from './redeem-button';
 
 const options = [
   { name: 'Cappuccino', image: '/cappuccino.png' },
@@ -11,9 +9,12 @@ const options = [
   { name: 'Latte', image: '/latte.png' },
 ];
 
-export default function Option() {
-  const [selected, setSelected] = useState<string | null>(null);
+type OptionProps = {
+  selected: string | null;
+  onSelect: (value: string) => void;
+};
 
+export default function Option({ selected, onSelect }: OptionProps) {
   return (
     <div className="w-full flex flex-col items-center space-y-6">
       {/* Option cards */}
@@ -24,7 +25,7 @@ export default function Option() {
           return (
             <div
               key={option.name}
-              onClick={() => setSelected(option.name)}
+              onClick={() => onSelect(option.name)}
               className={clsx(
                 'flex-1 cursor-pointer border-2 rounded-xl p-4 text-center transition-transform transform hover:scale-105',
                 isSelected ? 'border-4 border-[#6448E1]' : 'border-gray-200'
@@ -52,9 +53,6 @@ export default function Option() {
           );
         })}
       </div>
-
-      {/* Redeem Button */}
-      <Redeem selected={selected} />
     </div>
   );
 }
