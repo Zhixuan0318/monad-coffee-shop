@@ -1,87 +1,81 @@
-'use client';
+"use client";
 
-import { useAccount, useReadContract } from "wagmi";
-import { formatUnits } from "viem";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { createPublicClient, http, formatUnits } from "viem";
+import { monadTestnet } from "@wagmi/core/chains";
 
+import { beanTokenABI } from "@/lib/abi/beanToken";
 import Banner from "@/component/banner";
 import Balance from "@/component/balance";
 import ClaimButton from "@/component/claim-button";
 import Option from "@/component/option";
 import WalletConnectButton from "@/component/walletConnect-button";
-import { BEAN_TOKEN } from "@/constants/token";
+
+const BEAN_ADDRESS = "0x110225d9A24a40374D752B1d05275488aB5CC8b6";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const [totalSupply, setTotalSupply] = useState("0");
+  const [userBalance, setUserBalance] = useState("0");
 
-  // Read totalSupply
-  const { data: totalSupplyRaw } = useReadContract({
-    ...BEAN_TOKEN,
-    functionName: "totalSupply",
+  const client = createPublicClient({
+    chain: monadTestnet,
+    transport: http(),
   });
 
-  // Read balanceOf for connected wallet
-  const { data: userBalanceRaw } = useReadContract({
-    ...BEAN_TOKEN,
-    functionName: "balanceOf",
-    args: [address!],
-    enabled: !!address,
-  });
+  const fetchBalances = async () => {
+    try {
+      const [total, balance] = await Promise.all([
+        client.readContract({
+          address: BEAN_ADDRESS,
+          abi: beanTokenABI,
+          functionName: "totalSupply",
+        }),
+        address
+          ? client.readContract({
+              address: BEAN_ADDRESS,
+              abi: beanTokenABI,
+              functionName: "balanceOf",
+              args: [address],
+            })
+          : Promise.resolve(0n),
+      ]);
 
-  const totalSupply = totalSupplyRaw
-    ? Number(formatUnits(totalSupplyRaw, BEAN_TOKEN.decimals))
-    : 0;
+      setTotalSupply(formatUnits(total, 18));
+      setUserBalance(formatUnits(balance, 18));
+    } catch (err) {
+      console.error("Error fetching balances:", err);
+    }
+  };
 
-  const userBalance = userBalanceRaw
-    ? Number(formatUnits(userBalanceRaw, BEAN_TOKEN.decimals))
-    : 0;
+  useEffect(() => {
+    fetchBalances();
+  }, [address]);
 
   return (
     <main className="flex flex-col items-center min-h-screen">
       <div className="w-full max-w-2xl space-y-5">
-
         <Banner />
+        {!isConnected && <WalletConnectButton />}
 
-        <AnimatePresence>
-          {!isConnected && (
-            <motion.div
-              key="connect-button"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-            >
-              <WalletConnectButton />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isConnected && (
+          <>
+            <div className="flex space-x-2">
+              <Balance title="Total Supply" amount={totalSupply} />
+              <Balance title="Your Balance" amount={userBalance} />
+            </div>
 
-        <AnimatePresence>
-          {isConnected && (
-            <motion.div
-              key="main-content"
-              initial={{ opacity: 0, y: 80 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-            >
-              <div className="flex space-x-2">
-                <Balance title="Total Supply" amount={totalSupply} />
-                <Balance title="Your Balance" amount={userBalance} />
-              </div>
+            <div className="mt-4">
+              <ClaimButton onClaimSuccess={fetchBalances} />
+            </div>
 
-              <div className="mt-4">
-                <ClaimButton />
-              </div>
-
-              <h2 className="font-semibold text-lg text-[#432DA8] mt-10">
-                Choose a coffee
-              </h2>
-              <Option />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+            <h2 className="font-semibold text-lg text-[#432DA8] mt-5">
+              Choose a coffee
+            </h2>
+            <Option />
+          </>
+        )}
       </div>
     </main>
   );
