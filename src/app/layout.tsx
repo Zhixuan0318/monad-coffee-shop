@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Monad Coffee Shop",
-  description: "Spend your $BEAN and redeem your on-chain coffee at Monad Coffee Shop. A demo DApp for the Zero to Hero's ERC20 guide.",
+  description: "Spend your $BEAN and redeem your on-chain coffee at Monad Coffee Shop. A demo DApp for the Zero to Hero ERC20 guide.",
 };
 
 export default function RootLayout({

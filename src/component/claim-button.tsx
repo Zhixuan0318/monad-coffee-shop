@@ -32,9 +32,13 @@ export default function ClaimButton({ onClaimSuccess }: ClaimButtonProps) {
 
       setTxHash(data.hash);
       onClaimSuccess?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Claim failed:", err);
-      setError(err.message || "Error");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error");
+      }
     } finally {
       setLoading(false);
     }
