@@ -2,6 +2,8 @@
 
 import clsx from "clsx";
 import { useAccount, useWriteContract } from "wagmi";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { config } from "@/config/wagmi";
 import { useState } from "react";
 import { parseUnits } from "viem";
 import { beanTokenABI } from "@/lib/abi/beanToken";
@@ -31,22 +33,40 @@ export default function Redeem({ selected, onRedeemSuccess }: RedeemProps) {
 
     try {
       // Step 1: Approve 1 BEAN to SPENDER
-      await writeContractAsync({
+      const approveTx = await writeContractAsync({
         address: BEAN_ADDRESS,
         abi: beanTokenABI,
         functionName: "approve",
         args: [SPENDER, parseUnits("1", 18)],
       });
 
-      // Step 2: Redeem coffee
-      const hash = await writeContractAsync({
-        address: BEAN_ADDRESS,
-        abi: beanTokenABI,
-        functionName: "redeemCoffee",
-        args: [address, selected],
+      const approveReceipt = await waitForTransactionReceipt(config, {
+        hash: approveTx,
       });
 
-      setTxHash(hash);
+      if (approveReceipt.status !== "success") {
+        throw new Error("Approve transaction failed");
+      }
+
+      // Step 2: Redeem coffee
+      const res = await fetch("/api/redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userAddress: address,
+          drinkName: selected,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Redeem API call failed");
+      }
+
+      setTxHash(data.hash);
       onRedeemSuccess?.();
     } catch (err: unknown) {
       console.error("Redeem failed:", err);
